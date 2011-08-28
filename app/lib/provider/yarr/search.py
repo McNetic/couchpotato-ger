@@ -1,6 +1,7 @@
 from app.config.cplog import CPLog
 from app.lib.provider.yarr.sources.newznab import newznab
 from app.lib.provider.yarr.sources.nzbmatrix import nzbMatrix
+from app.lib.provider.yarr.sources.nzbindexnl import nzbindexnl
 from app.lib.provider.yarr.sources.newzbin import newzbin
 from app.lib.provider.yarr.sources.nzbs import nzbs
 from app.lib.provider.yarr.sources.tpb import tpb
@@ -20,7 +21,7 @@ class Searcher():
         self.config = config
         self.debug = debug
 
-        for yarr in [newzbin, nzbMatrix, nzbs, newznab, tpb]:
+        for yarr in [newzbin, nzbMatrix, nzbindexnl, nzbs, newznab, tpb]:
             m = yarr(config)
             self.sources.append(m)
 
