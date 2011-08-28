@@ -53,7 +53,7 @@ class nzbindexnl(nzbBase):
             'sort':'agedesc',
             'max':'100',
             'minsize':'400',
-            'q': self.toSearchString(movie.name + ' ' + type),
+            'q': self.toSearchString(movie.name),
         })
         url = "%s?%s" % (self.apiUrl, arguments)
         cacheId = str(movie.imdb) + '-' + str(catId)
