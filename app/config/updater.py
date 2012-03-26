@@ -119,7 +119,8 @@ class Updater(rss, SimplePlugin):
                     lineList = handle.readlines()
                     handle.close()
                     self.version = lineList[-1].replace('brototyp-CouchPotato-', '').replace('.tar.gz', '')
-
+        if not self.hasGit():
+            log.debug('Did not found local GIT')
         return self.version
 
     def checkForUpdate(self):
