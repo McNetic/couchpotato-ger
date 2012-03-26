@@ -58,6 +58,8 @@ class configApp():
         self.setDefault('Renamer', 'fileNaming', '<thename><cd>.<ext>')
         self.setDefault('Renamer', 'separator', ' ')
         self.setDefault('Renamer', 'cleanup', False)
+        self.setDefault('Renamer', 'script_enabled', False)
+        self.setDefault('Renamer', 'file_path', '')
 
         self.addSection('Trailer')
         self.setDefault('Trailer', 'quality', False)
@@ -86,6 +88,10 @@ class configApp():
         self.setDefault('NZBsRUS', 'enabled', False)
         self.setDefault('NZBsRUS', 'userid', '')
         self.setDefault('NZBsRUS', 'userhash', '')
+        self.addSection('x264')
+        self.setDefault('x264', 'enabled', False)
+        self.addSection('mysterbin')
+        self.setDefault('mysterbin', 'enabled', False)
 
         self.addSection('NZB')
         self.setDefault('NZB', 'enabled', True)
@@ -154,6 +160,26 @@ class configApp():
         self.setDefault('MovieRSS', 'enabled', False)
         self.setDefault('MovieRSS', 'minyear', '2000')
         self.setDefault('MovieRSS', 'minrating', '6.0')
+        self.setDefault('MovieRSS', 'minvotes', '900')
+
+        self.addSection('KinepolisRSS')
+        self.setDefault('KinepolisRSS', 'enabled', False)
+        self.setDefault('KinepolisRSS', 'minyear', '2000')
+        self.setDefault('KinepolisRSS', 'minrating', '6.0')
+        self.setDefault('KinepolisRSS', 'minvotes', '900')
+
+        self.addSection('Trakt')
+        self.setDefault('Trakt', 'watchlist_enabled', False)
+        self.setDefault('Trakt', 'notification_enabled', False)
+        self.setDefault('Trakt', 'watchlist_remove', False)
+        self.setDefault('Trakt', 'dontaddcollection', True)
+        self.setDefault('Trakt', 'apikey', '')
+        self.setDefault('Trakt', 'username', '')
+        self.setDefault('Trakt', 'password', '')
+
+        self.addSection('IMDBWatchlist')
+        self.setDefault('IMDBWatchlist', 'enabled', False)
+        self.setDefault('IMDBWatchlist', 'url', '')
 
         self.addSection('XBMC')
         self.setDefault('XBMC', 'enabled', False)
@@ -163,6 +189,7 @@ class configApp():
         self.setDefault('XBMC', 'password', 'xbmc')
         self.setDefault('XBMC', 'dbpath', '')
         self.setDefault('XBMC', 'updateOneOnly', False)
+        self.setDefault('XBMC', 'useWebAPIExistingCheck', False)
 
         self.addSection('NMJ')
         self.setDefault('NMJ', 'enabled', False)
@@ -192,12 +219,24 @@ class configApp():
         self.setDefault('Notifo', 'username', '')
         self.setDefault('Notifo', 'key', '')
 
+        self.addSection('Boxcar')
+        self.setDefault('Boxcar', 'enabled', False)
+        self.setDefault('Boxcar', 'onSnatch', False)
+        self.setDefault('Boxcar', 'username', '')
+
         self.addSection('NMA')
         self.setDefault('NMA', 'enabled', False)
         self.setDefault('NMA', 'onSnatch', False)
         self.setDefault('NMA', 'apikey', '')
         self.setDefault('NMA', 'devkey', '')
         self.setDefault('NMA', 'priority', '0')
+
+        self.addSection('NMWP')
+        self.setDefault('NMWP', 'enabled', False)
+        self.setDefault('NMWP', 'onSnatch', False)
+        self.setDefault('NMWP', 'apikey', '')
+        self.setDefault('NMWP', 'devkey', '')
+        self.setDefault('NMWP', 'priority', '0')
 
         self.addSection('Twitter')
         self.setDefault('Twitter', 'enabled', False)
@@ -211,6 +250,7 @@ class configApp():
 
         self.addSection('Meta')
         self.setDefault('Meta', 'enabled', False)
+        self.setDefault('Meta', 'urlOnly', False)
         self.setDefault('Meta', 'fanartMinHeight', 0)
         self.setDefault('Meta', 'fanartMinWidth', 0)
         self.setDefault('Meta', 'posterMinHeight', 0)
@@ -218,7 +258,7 @@ class configApp():
         self.setDefault('Meta', 'fanartFileName', 'fanart.<orig_ext>')
         self.setDefault('Meta', 'posterFileName', 'movie.tbn')
         self.setDefault('Meta', 'nfoFileName', 'movie.nfo')
-
+        
         self.save()
 
     def save(self):

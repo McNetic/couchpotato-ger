@@ -11,7 +11,9 @@ from app.lib.xbmc import XBMC
 from app.lib.prowl import PROWL
 from app.lib.growl import GROWL
 from app.lib.notifo import Notifo
+from app.lib.boxcar import Boxcar
 from app.lib.nma import NMA
+from app.lib.nmwp import NMWP
 from app.lib.twitter import Twitter
 import cherrypy
 import datetime
@@ -219,12 +221,24 @@ class YarrCron(cronBase, rss):
                             notifo = Notifo()
                             notifo.notify('%s' % highest.name, "Snatched:")
 
+                        # Notify Boxcar
+                        if self.config.get('Boxcar', 'onSnatch'):
+                            log.debug('Boxcar')
+                            boxcar = Boxcar()
+                            boxcar.notify('%s' % highest.name, "Snatched:")
+
                         # Notify NotifyMyAndroid
                         if self.config.get('NMA', 'onSnatch'):
                             log.debug('NotifyMyAndroid')
                             nma = NMA()
                             nma.notify('Download Started', 'Snatched %s' % highest.name)
-
+                        
+                        # Notify NotifyMyWindowsPhone
+                        if self.config.get('NMWP', 'onSnatch'):
+                            log.debug('NotifyMyWindowsPhone')
+                            nmwp = NMWP()
+                            nmwp.notify('Download Started', 'Snatched %s' % highest.name)
+                            
                         # Notify Twitter
                         if self.config.get('Twitter', 'onSnatch'):
                             log.debug('Twitter')
@@ -252,11 +266,14 @@ class YarrCron(cronBase, rss):
                     if not file:
                         return False
                 else:
-                    log.info('Downloading %s to %s.' % (item.type, fullPath))
                     file = urllib.urlopen(item.url).read()
 
-                with open(fullPath, 'wb') as f:
-                    f.write(file)
+                    if item.type == 'nzb' and "DOCTYPE nzb" not in file:
+                        fullPath = os.path.join(blackhole, self.toSaveString(item.name) + '.' + 'rar')
+
+                    log.info('Downloading %s to %s.' % (item.type, fullPath))
+                    with open(fullPath, 'wb') as f:
+                        f.write(file)
 
                 return True
             else:
