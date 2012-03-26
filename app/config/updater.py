@@ -119,7 +119,8 @@ class Updater(rss, SimplePlugin):
                     lineList = handle.readlines()
                     handle.close()
                     self.version = lineList[-1].replace('brototyp-CouchPotato-', '').replace('.tar.gz', '')
-
+        if not self.hasGit():
+            log.debug('Did not found local GIT')
         return self.version
 
     def checkForUpdate(self):
@@ -136,6 +137,8 @@ class Updater(rss, SimplePlugin):
             update = self.checkGitHubForUpdate()
             latest_commit = update.get('name').replace('brototyp-CouchPotato-', '').replace('.tar.gz', '')
 
+            log.debug('latest commit:'+latest_commit)
+            
             if self.hasGit() and self.isRepo():
                 self.updateAvailable = latest_commit not in self.version
             elif update:
@@ -166,7 +169,6 @@ class Updater(rss, SimplePlugin):
         except:
             name = 'UNKNOWN Build.'
             log.error('Something is wrong with the updater.')
-
         return {'name':name, 'data':data}
 
 
