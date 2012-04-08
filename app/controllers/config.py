@@ -8,7 +8,11 @@ from app.lib.plex import PLEX
 from app.lib.prowl import PROWL
 from app.lib.growl import GROWL
 from app.lib.notifo import Notifo
+from app.lib.boxcar import Boxcar
 from app.lib.nma import NMA
+from app.lib.nmwp import NMWP
+from app.lib.twitter import Twitter
+from app.lib.trakt import Trakt
 import cherrypy
 import json
 import sys
@@ -60,13 +64,20 @@ class ConfigController(BaseController):
         bools = filter(lambda s: not data.get(s),
             [
               'global.launchbrowser', 'global.updater',
-              'XBMC.enabled', 'XBMC.onSnatch',
+              'XBMC.enabled', 'XBMC.onSnatch', 'XBMC.useWebAPIExistingCheck',
               'NMJ.enabled',
               'PLEX.enabled',
               'PROWL.enabled', 'PROWL.onSnatch',
               'GROWL.enabled', 'GROWL.onSnatch',
               'Notifo.enabled', 'Notifo.onSnatch',
+              'Boxcar.enabled', 'Boxcar.onSnatch',
               'NMA.enable', 'NMA.onSnatch',
+              'NMWP.enable', 'NMWP.onSnatch',
+              'Twitter.enabled', 'Twitter.onSnatch',
+              'Trakt.notification_enabled',
+              'Trakt.watchlist_remove',
+              'Trakt.watchlist_enabled',
+              'Trakt.dontaddcollection',
               'Meta.enabled',
               'MovieETA.enabled',
               'Renamer.enabled', 'Renamer.trailerQuality', 'Renamer.cleanup',
@@ -77,8 +88,11 @@ class ConfigController(BaseController):
               'newzbin.enabled',
               'NZBsorg.enabled',
               'newznab.enabled',
+              'x264.enabled',
               'Subtitles.enabled', 'Subtitles.addLanguage',
               'MovieRSS.enabled',
+              'KinepolisRSS.enabled',
+              'IMDBWatchlist.enabled',
             ]
         )
         data.update(data.fromkeys(bools, False))
@@ -165,11 +179,59 @@ class ConfigController(BaseController):
         return ''
     
     @cherrypy.expose
+    def testBoxcar(self, **data):
+
+        boxcar = Boxcar()
+        boxcar.test(data.get('Boxcar.username'))
+
+        return ''
+    
+    @cherrypy.expose
     def testNMA(self, **data):
         
         nma = NMA()
         nma.test(data.get('NMA.apikey'), data.get('NMA.devkey'), data.get('NMA.priority'))
         return ''
+
+    @cherrypy.expose
+    def testNMWP(self, **data):
+        
+        nmwp = NMWP()
+        nmwp.test(data.get('NMWP.apikey'), data.get('NMWP.devkey'), data.get('NMWP.priority'))
+        return ''
+        
+    @cherrypy.expose
+    def testTwitter(self, **data):
+
+        twitter = Twitter()
+        twitter.test()
+        return ''
+    
+    @cherrypy.expose
+    def testTrakt(self, **data):
+
+        trakt = Trakt()
+        result = trakt.test(data.get('Trakt.apikey'), data.get('Trakt.username'), data.get('Trakt.password'))
+
+        return str(result)
+
+    @cherrypy.expose
+    def twitterReqAuth(self):
+
+        twitter = Twitter()
+        referer = cherrypy.request.headers.get('referer')
+        auth_url = twitter.get_authorization(referer)
+        if not auth_url:
+          return ('Error making an oauth connection to Twitter.  Check your '
+                  'system time?  See the logs for a more detailed error.')
+        return redirect(auth_url)
+
+    @cherrypy.expose
+    def twitterAuth(self, oauth_token=None, oauth_verifier=None, **params):
+
+        twitter = Twitter()
+        twitter.get_credentials(oauth_verifier)
+        return redirect('../')
 
     @cherrypy.expose
     def exit(self):

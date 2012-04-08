@@ -1,9 +1,12 @@
 from app.config.cplog import CPLog
 from app.lib.provider.yarr.sources.newznab import newznab
 from app.lib.provider.yarr.sources.nzbmatrix import nzbMatrix
+from app.lib.provider.yarr.sources.nzbindexnl import nzbindexnl
 from app.lib.provider.yarr.sources.newzbin import newzbin
 from app.lib.provider.yarr.sources.nzbs import nzbs
 from app.lib.provider.yarr.sources.tpb import tpb
+from app.lib.provider.yarr.sources.x264 import x264
+from app.lib.provider.yarr.sources.nzbsrus import nzbsRus
 from app.lib.qualities import Qualities
 from urllib2 import URLError
 import time
@@ -20,7 +23,7 @@ class Searcher():
         self.config = config
         self.debug = debug
 
-        for yarr in [newzbin, nzbMatrix, nzbs, newznab, tpb]:
+        for yarr in [newzbin, nzbMatrix, nzbindexnl, nzbs, newznab, tpb, x264, nzbsRus]:
             m = yarr(config)
             self.sources.append(m)
 
@@ -44,7 +47,7 @@ class Searcher():
 
             #search for highest score
             highest = None
-            highestScore = 0
+            highestScore = -1000
             if results:
                 for result in results:
                     if result.score > highestScore:

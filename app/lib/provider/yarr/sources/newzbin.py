@@ -5,6 +5,8 @@ from urllib import urlencode
 from urllib2 import URLError
 import time
 import traceback
+import urllib
+import urllib2
 
 log = CPLog(__name__)
 
@@ -12,7 +14,10 @@ class newzbin(nzbBase):
     """Api for newzbin"""
 
     name = 'Newzbin'
-    searchUrl = 'https://www.newzbin.com/search/'
+    searchUrl = 'https://www.newzbin2.es/search/'
+    downloadUrl = 'http://www.newzbin2.es/api/dnzb/'
+    REPORT_NS_OLD = 'http://www.newzbin.com/DTD/2007/feeds/report/'
+    REPORT_NS = 'http://www.newzbin2.es/DTD/2007/feeds/report/'
 
     formatIds = {
         2: ['scr'],
@@ -104,12 +109,15 @@ class newzbin(nzbBase):
                     title = self.gettextelement(item, "title")
                     if 'error' in title.lower(): continue
 
-                    REPORT_NS = 'http://www.newzbin.com/DTD/2007/feeds/report/';
-
-                    # Add attributes to name
-                    for attr in item.find('{%s}attributes' % REPORT_NS):
+                    try:
+                      for attr in item.find('{%s}attributes' % self.REPORT_NS):
                         title += ' ' + attr.text
-
+                        REPORT_NS = self.REPORT_NS
+                    except:
+                      for attr in item.find('{%s}attributes' % self.REPORT_NS_OLD):
+                        title += ' ' + attr.text
+                        REPORT_NS = self.REPORT_NS_OLD
+                    
                     id = int(self.gettextelement(item, '{%s}id' % REPORT_NS))
                     size = str(int(self.gettextelement(item, '{%s}size' % REPORT_NS)) / 1024 / 1024) + ' mb'
                     date = str(self.gettextelement(item, '{%s}postdate' % REPORT_NS))
@@ -126,16 +134,32 @@ class newzbin(nzbBase):
                     new.score = self.calcScore(new, movie)
                     new.addbyid = True
                     new.checkNZB = False
+                    new.download = self.download
 
-                    if new.date > time.time() - (int(self.config.get('NZB', 'retention')) * 24 * 60 * 60) and self.isCorrectMovie(new, movie, type, imdbResults = True, singleCategory = singleCat):
+                    if self.isCorrectMovie(new, movie, type, imdbResults = True, singleCategory = singleCat):
                         results.append(new)
                         log.info('Found: %s' % new.name)
 
                 return results
             except:
-                log.error('Failed to parse XML response from newzbin.com: %s' % traceback.format_exc())
+                log.error('Failed to parse XML response from newzbin2.es: %s' % traceback.format_exc())
 
         return results
+
+    def download(self, id):
+        try:
+            log.info('Download nzb from newzbin, report id: %s ' % id)
+            newzbindata = urllib.urlencode({
+                'username' : self.conf('username'),
+                'password' : self.conf('password'),
+                'reportid' : str(id)
+            })
+            nzburl = urllib2.Request(self.downloadUrl, newzbindata)
+
+            return urllib2.urlopen(nzburl).read().strip()
+        except Exception, e:
+            log.error('Failed downloading from newzbin, check credit: %s' % e)
+            return False
 
     def getFormatId(self, format):
         for id, quality in self.formatIds.iteritems():

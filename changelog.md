@@ -1,9 +1,32 @@
 CouchPotato
 =====
 
-Version 34 (not released):
+Version 37 (not release):
 
-* [See diff](https://github.com/RuudBurger/CouchPotato/compare/ba91f05a58d29e490368aafc6b6f0c6dcfde0bf9...master)
+* [See diff](https://github.com/RuudBurger/CouchPotato/compare/8d652f7044cffd28c88bbcf14897c8fe4a9de5c7...master)
+
+Version 36:
+
+* [See diff for changes](https://github.com/RuudBurger/CouchPotato/compare/fd6cb0b870ff39e70b26aea6cbaeeebf4a07773c...8d652f7044cffd28c88bbcf14897c8fe4a9de5c7)
+
+Version 35:
+
+* I'm lazy ;)
+* [See diff](https://github.com/RuudBurger/CouchPotato/compare/6ef1e06b33711bcb122c2520fc8c12b2f4b20df4...fd6cb0b870ff39e70b26aea6cbaeeebf4a07773c)
+
+
+Version 34:
+
+* New: Synology Media Server support
+* New: RottenTomatoes userscript
+* New: NZBget support
+* New: Transmission support
+* New: NotifyMyAndroid notifications
+* New: NZBsRus support
+* Enhancement: Check for update in diff thread
+* Enhancement: Providers in https
+* Enhancement: Created own ETA searcher
+* [See diff](https://github.com/RuudBurger/CouchPotato/compare/ba91f05a58d29e490368aafc6b6f0c6dcfde0bf9...6ef1e06b33711bcb122c2520fc8c12b2f4b20df4)
 
 
 Version 33:

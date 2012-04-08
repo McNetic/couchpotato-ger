@@ -11,7 +11,10 @@ from app.lib.xbmc import XBMC
 from app.lib.prowl import PROWL
 from app.lib.growl import GROWL
 from app.lib.notifo import Notifo
+from app.lib.boxcar import Boxcar
 from app.lib.nma import NMA
+from app.lib.nmwp import NMWP
+from app.lib.twitter import Twitter
 import cherrypy
 import datetime
 import os
@@ -27,6 +30,7 @@ class YarrCron(cronBase, rss):
     lastChecked = 0
     provider = None
     sabNzbd = None
+    nzbGet = None
     intervalSec = 10
     checkTheseMovies = []
     stop = False
@@ -105,7 +109,7 @@ class YarrCron(cronBase, rss):
         # Search all if ETA is unknow, but try update ETA for next time.
         log.debug('Calculate ETA')
         checkETA = False
-        if not movie.eta or force:
+        if not movie.eta:
             checkETA = True
             preReleaseSearch = True
             dvdReleaseSearch = True
@@ -121,15 +125,14 @@ class YarrCron(cronBase, rss):
 
             # Dvd date is unknown but movie is in theater already
             if movie.eta.dvd == 0 and movie.eta.theater > now:
-                checkETA = True
                 dvdReleaseSearch = False
 
-            # Force ETA check once a week or 3 weeks
-            if ((movie.eta.dvd == 0 or movie.eta.theater == 0) and movie.eta.lastCheck < now - 604800) or (movie.eta.lastCheck < now - 1814400):
+            # Force ETA check
+            if movie.eta.lastCheck < now:
                 checkETA = True
 
         # Minimal week interval for ETA check
-        if checkETA:
+        if checkETA and self.config.get('MovieETA', 'enabled'):
             cherrypy.config.get('searchers').get('etaQueue').put({'id':movie.id})
 
         for queue in movie.queue:
@@ -166,11 +169,13 @@ class YarrCron(cronBase, rss):
                         time.sleep(10) # Give these APIs air!
                         if self.config.get('NZB', 'sendTo') == 'Sabnzbd' and highest.type == 'nzb':
                             success = self.sabNzbd.send(highest, movie.imdb)
+                        elif self.config.get('NZB', 'sendTo') == 'Nzbget' and highest.type == 'nzb':
+                            success = self.nzbGet.send(highest)
                         elif self.config.get('Torrents', 'sendTo') == 'Transmission' and highest.type == 'torrent':
                             success = self.transmission.send(highest, movie.imdb)
                         else:
                             success = self.blackHole(highest)
- 
+
                     else:
                         success = False
                         log.info('Found %s but waiting for %d hours.' % (highest.name, ((highest.date + waitFor) - time.time()) / (60 * 60)))
@@ -215,12 +220,30 @@ class YarrCron(cronBase, rss):
                             log.debug('Notifo')
                             notifo = Notifo()
                             notifo.notify('%s' % highest.name, "Snatched:")
-                            
+
+                        # Notify Boxcar
+                        if self.config.get('Boxcar', 'onSnatch'):
+                            log.debug('Boxcar')
+                            boxcar = Boxcar()
+                            boxcar.notify('%s' % highest.name, "Snatched:")
+
                         # Notify NotifyMyAndroid
-                        if self.config.get('NMA','onSnatch'):
+                        if self.config.get('NMA', 'onSnatch'):
                             log.debug('NotifyMyAndroid')
                             nma = NMA()
                             nma.notify('Download Started', 'Snatched %s' % highest.name)
+                        
+                        # Notify NotifyMyWindowsPhone
+                        if self.config.get('NMWP', 'onSnatch'):
+                            log.debug('NotifyMyWindowsPhone')
+                            nmwp = NMWP()
+                            nmwp.notify('Download Started', 'Snatched %s' % highest.name)
+                            
+                        # Notify Twitter
+                        if self.config.get('Twitter', 'onSnatch'):
+                            log.debug('Twitter')
+                            twitter = Twitter()
+                            twitter.notify('Download Started', 'Snatched %s' % highest.name)
 
                     return True
 
@@ -237,10 +260,20 @@ class YarrCron(cronBase, rss):
             fullPath = os.path.join(blackhole, self.toSaveString(item.name) + '.' + item.type)
 
             if not os.path.isfile(fullPath):
-                log.info('Downloading %s to %s.' % (item.type, fullPath))
-                file = urllib.urlopen(item.url).read()
-                with open(fullPath, 'wb') as f:
-                    f.write(file)
+                if item.download:
+                    file = item.download(item.id)
+
+                    if not file:
+                        return False
+                else:
+                    file = urllib.urlopen(item.url).read()
+
+                    if item.type == 'nzb' and "DOCTYPE nzb" not in file:
+                        fullPath = os.path.join(blackhole, self.toSaveString(item.name) + '.' + 'rar')
+
+                    log.info('Downloading %s to %s.' % (item.type, fullPath))
+                    with open(fullPath, 'wb') as f:
+                        f.write(file)
 
                 return True
             else:

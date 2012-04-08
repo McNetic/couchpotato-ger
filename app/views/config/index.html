@@ -1,13 +1,14 @@
 <div id="configForm">
 	<ul>
 		<li><a href="#general">General</a></li>
-		<li><a href="#content">NZBs / Torrents</a></li>
+		<li><a href="#content">Downloaders</a></li>
 		<li><a href="#providers">Providers</a></li>
 		<li><a href="#quality">Quality</a></li>
 		<li><a href="#renaming">Renaming</a></li>
 		<li><a href="#extra">Extras</a></li>
 		<li><a href="#notifications">Notifications</a></li>
 		<li><a href="#userscript">Userscript</a></li>
+		<li><a href="#iphone">iPhone</a></li>
 		<li><a href="#about">About</a></li>
 	</ul>
 		
@@ -37,14 +38,7 @@
 				</div>
 				<div class="ctrlHolder checkbox">
 					<label>Use updater</label>
-					<% hasGit = updater.hasGit() %>
-					<input type="checkbox" name="global.updater" value="True" ${' checked="checked"' if config.get('global', 'updater') and not hasGit else ''} ${' disabled="disabled"' if hasGit else ''} />
-					% if hasGit:
-					<p class="formHint">
-						To enable the CouchPotato Updater, remove the ".git" folder.
-						Otherwise use "git pull".
-					</p>
-					% endif
+					<input type="checkbox" name="global.updater" value="True" ${' checked="checked"' if config.get('global', 'updater') else ''} />
 				</div>
 			</fieldset>
 			<fieldset class="inlineLabels">
@@ -91,7 +85,7 @@
 				<div class="ctrlHolder">
 					<label for="nzbSendTo">Download to</label>
 					<select name="NZB.sendTo" id="nzbSendTo" class="textInput large">
-						% for sendTo in ['Sabnzbd','Blackhole']:
+						% for sendTo in ['Sabnzbd','Blackhole','Nzbget']:
 						<option value="${sendTo}"${' selected="selected"' if str(sendTo) == config.get('NZB', 'sendTo') else ''}>${sendTo}</option>
 						% endfor
 					</select>
@@ -136,6 +130,29 @@
 						</p>
 					</div>
 				</div>
+                <div class="nzbget sendTonzb">
+                    <div class="ctrlHolder">
+                        <label>Host</label>
+                        <input type="text" name="Nzbget.host" value="${config.get('Nzbget', 'host')}" class="textInput large" />
+                        <p class="formHint">
+                            Hostname with port. Usually <i>localhost:6789</i>
+                        </p>
+                    </div>
+					<div class="ctrlHolder">
+						<label>Password</label>
+						<input type="password" name="Nzbget.password" value="${config.get('Nzbget', 'password')}" autocomplete="off" class="textInput large"/>
+					    <p class="formHint">
+							nzbGet password. Default is <i>tegbzn6789</i>
+						</p>
+                    </div>
+					<div class="ctrlHolder">
+						<label>Category</label>
+						<input type="text" name="Nzbget.category" value="${config.get('Nzbget', 'category')}" class="textInput large"/>
+						<p class="formHint">
+							Category where NZBs should be put.
+						</p>
+					</div>
+                </div>
 			</fieldset>
 			
 			<fieldset class="inlineLabels" id="torrentsFieldset">
@@ -257,6 +274,18 @@
 						<span><strong>cdNr</strong>: 1</span>
 					</p>
 				</div>
+				<div class="ctrlHolder checkbox">
+					<label>Post-Processing Script</label>
+					<input type="checkbox" name="Renamer.script_enabled" value="True" ${' checked="checked"' if config.get('Renamer', 'script_enabled') else ''} />
+				</div>
+				<div class="ctrlHolder">
+					<label>File Path</label>
+					<input type="text" name="Renamer.file_path" value="${config.get('Renamer','file_path')}" class="textInput large"/>
+					<p class="formHint">
+						Relative file path to your extra script (starting from CouchPotato install folder)
+					</p>
+				</div>
+			</fieldset>
 			</fieldset>
 			<fieldset class="inlineLabels">
 				<div class="ctrlHolder">
@@ -391,6 +420,36 @@
 					</p>
 				</div>
 			</fieldset>
+
+			<fieldset class="inlineLabels" id="newzbinFieldset">
+				<h3>nzbindex.nl</h3>
+				<div class="ctrlHolder checkbox">
+					<label>Enable</label>
+					<input type="checkbox" name="nzbindexnl.enabled" value="True" ${' checked="checked"' if config.get('nzbindexnl', 'enabled') else ''} />
+				</div>
+			</fieldset>
+           	<fieldset class="inlineLabels">
+				<h3>#alt.binaries.hdtv.x264@EFnet</h3>
+				<div class="ctrlHolder checkbox">
+					<label>Enable</label>
+					<input type="checkbox" name="x264.enabled" value="True" ${' checked="checked"' if config.get('x264','enabled') else''} />
+					<p class="formHint">
+						HD movies only
+					</p>
+				</div>
+			</fieldset>
+		
+			<fieldset class="inlineLabels" style="float: right!important;">	<!--Temp layout fix-->
+				<h3>MysterBin</h3>
+				<div class="ctrlHolder checkbox">
+					<label>Enable</label>
+					<input type="checkbox" name="mysterbin.enabled" value="True" ${' checked="checked"' if config.get('mysterbin','enabled') else''} />
+					<p class="formHint">
+						Web Search provider 
+					</p>
+				</div>
+			</fieldset>
+
 		</div>
 
 		<div class="group userscript">
@@ -400,6 +459,14 @@
 					To use this UserScript, you need <a href="http://www.google.com/chrome/" target="_blank">Google Chrome</a> or the <a href="https://addons.mozilla.org/en-US/firefox/addon/748/" target="_blank">Greasemonkey addon</a> when using Firefox.
 				</p>
 				<p style="font-size:11px">If you're on Safari, see <a href="http://couchpotato.fafoulon.fr/" target="_blank">this (unsupported) Safari extension by Fafoulon</a></p>
+			</fieldset>
+		</div>
+
+		<div class="group iphone">
+			<fieldset class="inlineLabels">
+				<div>Got a jailbroken iPhone? Get the CouchPotato app on Cydia! <span>(search for "<strong>iCouchPotato</strong>")</span></div>
+				<img src="${baseUrl}media/images/iphone1.png" /><img src="${baseUrl}media/images/iphone2.png" /><img src="${baseUrl}media/images/iphone3.png" />
+				<div>Why isn't it in the normal Appstore you ask? Because Apple is being a bitch!</div>
 			</fieldset>
 		</div>
 
@@ -513,12 +580,15 @@
 				<div class="ctrlHolder checkbox">
 					<label>Enable</label>
 					<input type="checkbox" name="MovieRSS.enabled" value="True" ${' checked="checked"' if config.get('MovieRSS', 'enabled') else ''} />
+					<p class="formHint">
+						This will magically add movies to your wanted list that match the options below.
+					</p>
 				</div>
 				<div class="ctrlHolder">
 					<label>Minimum movie year</label>
 					<input type="text" name="MovieRSS.minyear" value="${config.get('MovieRSS', 'minyear')}" class="textInput large"/>
 					<p class="formHint">
-						Movies released after and including this year will added to the wanted list
+						Movies released after and including this year will be added to the wanted list
 					</p>
 				</div>
 				<div class="ctrlHolder">
@@ -526,6 +596,44 @@
 					<input type="text" name="MovieRSS.minrating" value="${config.get('MovieRSS','minrating')}" class="textInput large"/>
 					<p class="formHint">
 						The minimum IMDB rating for a movie to be added
+					</p>
+				</div>
+				<div class="ctrlHolder">
+					<label>Minimum IMDB votes</label>
+					<input type="text" name="MovieRSS.minvotes" value="${config.get('MovieRSS','minvotes')}" class="textInput large"/>
+					<p class="formHint">
+						The minimum IMDB votes for a movie to be added
+					</p>
+				</div>
+			</fieldset>
+			<fieldset class="inlineLabels">
+				<h3>Kinepolis.com RSS</h3>
+				<div class="ctrlHolder checkbox">
+					<label>Enable</label>
+					<input type="checkbox" name="KinepolisRSS.enabled" value="True" ${' checked="checked"' if config.get('KinepolisRSS', 'enabled') else ''} />
+					<p class="formHint">
+						This will magically add movies to your wanted list that match the options below.
+					</p>
+				</div>
+				<div class="ctrlHolder">
+					<label>Minimum movie year</label>
+					<input type="text" name="KinepolisRSS.minyear" value="${config.get('KinepolisRSS', 'minyear')}" class="textInput large"/>
+					<p class="formHint">
+						Movies released after and including this year will be added to the wanted list
+					</p>
+				</div>
+				<div class="ctrlHolder">
+					<label>Minimum IMDB rating</label>
+					<input type="text" name="KinepolisRSS.minrating" value="${config.get('KinepolisRSS','minrating')}" class="textInput large"/>
+					<p class="formHint">
+						The minimum IMDB rating for a movie to be added
+					</p>
+				</div>
+				<div class="ctrlHolder">
+					<label>Minimum IMDB Votes</label>
+					<input type="text" name="KinepolisRSS.minvotes" value="${config.get('KinepolisRSS','minvotes')}" class="textInput large"/>
+					<p class="formHint">
+						The minimum IMDB votes for a movie to be added
 					</p>
 				</div>
 			</fieldset>
@@ -583,6 +691,47 @@
 					</select>
 				</div>
 			</fieldset>
+			<fieldset class="inlineLabels" id="traktFieldset">
+				<h3>Trakt</h3>
+                <div class="ctrlHolder">
+					<label>Trakt Username</label>
+					<input type="text" name="Trakt.username" value="${config.get('Trakt','username')}" class="textInput large"/>
+					<p class="formHint">
+						Your Trakt username
+					</p>
+				</div>
+				<div class="ctrlHolder">
+					<label>Trakt Password</label>
+					<input type="password" name="Trakt.password" value="${config.get('Trakt', 'password')}" class="textInput large"/>
+					<p class="formHint">
+						Your Trakt Password
+					</p>
+				</div>
+				<div class="ctrlHolder">
+					<label>Trakt API Key</label>
+					<input type="text" name="Trakt.apikey" value="${config.get('Trakt', 'apikey')}" class="textInput large"/>
+					<p class="formHint">
+						Get your key at: <a href="http://trakt.tv/settings/api" onclick="window.open(this.href, '_blank'); return false;">http://trakt.tv/settings/api</a>
+					</p>
+				</div>
+                <div class="ctrlHolder checkbox">
+					<label>Grab movies from watchlist</label>
+					<input type="checkbox" name="Trakt.watchlist_enabled" value="True" ${' checked="checked"' if config.get('Trakt', 'watchlist_enabled') else ''} />
+					<p class="formHint">
+						This will add movies from your Trakt watchlist.
+					</p>
+				</div>
+                <div class="ctrlHolder checkbox">
+					<label>Ignore Movies in Trakt Collection</label>
+					<input type="checkbox" name="Trakt.dontaddcollection" value="True" ${' checked="checked"' if config.get('Trakt', 'dontaddcollection') else ''} />
+					<p class="formHint">
+						Don't add movies to CouchPotato from watchlist that are already in Trakt collection
+					</p>
+				</div>
+                <div class="ctrlHolder">
+					<a href="#traktTest" id="traktTest" class="testNotification">Send a message to Trakt, see if it works.</a>
+				</div>
+			</fieldset>
 			<fieldset class="inlineLabels">
 				<h3>Metadata</h3>
 				<div class="ctrlHolder checkbox">
@@ -592,12 +741,48 @@
 						Thumbnail, poster and .nfo file.
 					</p>
 				</div>
+				<div class="ctrlHolder checkbox">
+					<label>Save URL Only</label>
+					<input type="checkbox" name="Meta.urlonly" value="True" ${' checked="checked"' if config.get('Meta', 'urlonly') else ''} />
+					<p class="formHint">Save only the IMBD Url in the nfo file
+					</p>
+				</div>
+                <div class="ctrlHolder checkbox">
+                    <label>Fanart Filename</label>
+                    <input type="text" name="Meta.fanartfilename" value="${config.get('Meta','fanartfilename')}" class="textInput large"/>
+                </div>
+                <div class="ctrlHolder checkbox">
+                    <label>Poster Filename</label>
+                    <input type="text" name="Meta.posterfilename" value="${config.get('Meta','posterfilename')}" class="textInput large"/>
+                </div>
+                <div class="ctrlHolder checkbox">
+                    <label>NFO Filename</label>
+                    <input type="text" name="Meta.nfofilename" value="${config.get('Meta','nfofilename')}" class="textInput large"/>
+                </div>
 			</fieldset>
 			<fieldset class="inlineLabels">
 				<h3>MovieETA</h3>
 				<div class="ctrlHolder checkbox">
 					<label>Check VideoETA</label>
 					<input type="checkbox" name="MovieETA.enabled" value="True" ${' checked="checked"' if config.get('MovieETA', 'enabled') else ''} />
+				</div>
+				
+			</fieldset>
+			<fieldset class="inlineLabels">
+				<h3>IMDB Watchlists</h3>
+				<div class="ctrlHolder checkbox">
+					<label>Enable</label>
+					<input type="checkbox" name="IMDBWatchlist.enabled" value="True" ${' checked="checked"' if config.get('IMDBWatchlist', 'enabled') else ''} />
+					<p class="formHint">
+						This will magically add movies to your wanted list that appear in public IMDB Watchlist(s) specified below.
+					</p>
+				</div>
+				<div class="ctrlHolder">
+					<label>IMDB Watchlist URL(s)</label>
+                    <textarea name="IMDBWatchlist.url" cols="50" rows="5" class="textInput large">${config.get('IMDBWatchlist', 'url')}</textarea>
+					<p class="formHint">
+						Comma separated list of 'Export this list' links from the public IMDB Watchlist pages
+					</p>
 				</div>
 			</fieldset>
 		</div>
@@ -640,10 +825,17 @@
 					<label>DB Path</label>
 					<input type="text" name="XBMC.dbpath" value="${config.get('XBMC', 'dbpath')}" autocomplete="off" class="textInput large"/>
 					<p class="formHint">
-						Used for checking if you already have a movie in you library, before adding it to your wanted list.
+						Used for checking if you already have a movie in your library, before adding it to your wanted list.
 						Example: C:\Users\Username\AppData\Roaming\XBMC\userdata\Database
 					</p>
 				</div>
+                                <div class="ctrlHolder checkbox">
+                                        <label>Use web API</label>
+                                        <input type="checkbox" name="XBMC.useWebAPIExistingCheck" value="True" ${' checked="checked"' if config.get('XBMC', 'useWebAPIExistingCheck') else ''} />
+                                        <p class="formHint">
+                                                Whether to use web API against XBMC hosts to check if you have a movie in your library before adding it to your wanted list.
+                                        </p>
+                                </div>
 			</fieldset>
 			<fieldset class="inlineLabels" id="nmjFieldset">
 				<h3>Networked Media Jukebox</h3>
@@ -808,6 +1000,30 @@
 					<a href="#notifoTest" id="notifoTest" class="testNotification">Send a message to Notifo, see if it works.</a>
 				</div>
 			</fieldset>
+			<fieldset class="inlineLabels" id="boxcarFieldset">
+				<h3>Boxcar</h3>
+				<div class="ctrlHolder checkbox">
+					<label>Enabled</label>
+					<input type="checkbox" name="Boxcar.enabled" value="True" ${' checked="checked"' if config.get('Boxcar', 'enabled') else ''} />
+					<p class="formHint">
+						Sends a notification to <a href="http://boxcar.io/" target="blank">Boxcar</a>
+					</p>
+				</div>
+				<div class="ctrlHolder checkbox">
+					<label>Also on snatched</label>
+					<input type="checkbox" name="Boxcar.onSnatch" value="True" ${' checked="checked"' if config.get('Boxcar', 'onSnatch') else ''} />
+					<p class="formHint">
+						Also send a notification when a movie is snatched.
+					</p>
+				</div>
+				<div class="ctrlHolder">
+					<label>Username</label>
+					<input type="text" name="Boxcar.username" value="${config.get('Boxcar', 'username')}" class="textInput large" />
+				</div>
+				<div class="ctrlHolder">
+					<a href="#boxcarTest" id="boxcarTest" class="testNotification">Send a message to Boxcar, see if it works.</a>
+				</div>
+			</fieldset>
 			<fieldset class="inlineLabels" id="nmaFieldset">
 				<h3>NotifyMyAndroid</h3>
 				<div class="ctrlHolder checkbox">
@@ -843,6 +1059,98 @@
 					<option value="1"${' selected="selected"' if config.get('NMA', 'priority') == '1' else ''}>High</option>
 					<option value="2"${' selected="selected"' if config.get('NMA', 'priority') == '2' else ''}>Emergency</option>
 					</select>
+				</div>
+			</fieldset>
+			<fieldset class="inlineLabels" id="nmwpFieldset">
+				<h3>NotifyMyWindowsPhone</h3>
+				<div class="ctrlHolder checkbox">
+					<label>Enabled</label>
+					<input type="checkbox" name="NMWP.enabled" value="True" ${' checked="checked"' if config.get('NMWP', 'enabled') else ''} />
+					<p class="formHint">
+						Sends a notification to <a href="https://NotifyMyWindowsPhone.com">NotifyMyWindowsPhone.com</a>
+					</p>
+				</div>
+				<div class="ctrlHolder checkbox">
+					<label>Also on snatched</label>
+					<input type="checkbox" name="NMWP.onSnatch" value="True" ${' checked="checked"' if config.get('NMWP', 'onSnatch') else ''} />
+					<p class="formHint">
+						Also send a notification when a movie is snatched.
+					</p>
+				</div>
+				<div class="ctrlHolder">
+					<label>API Key</label>
+					<input type="text" name="NMWP.apikey" value="${config.get('NMWP', 'apikey')}" class="textInput large" />
+					<p class="formHint">
+					Multiple keys must be seperated by a , (comma). Up to a maximum of 5
+					</p>
+				</div>
+				<div class="ctrlHolder">
+					<a href="#nmwpTest" id="nmwpTest" class="testNotification">Send a message to NotifyMyWindowsPhone, see if it works.</a>
+				</div>
+				<div class="ctrlHolder">
+					<label>Priority</label>
+					<select name="NMWP.priority" class="textInput large">
+					<option value="-2"${' selected="selected"' if config.get('NMWP', 'priority') == '-2' else ''}>Very Low</option>
+					<option value="-1"${' selected="selected"' if config.get('NMWP', 'priority') == '-1' else ''}>Moderate</option>
+					<option value="0"${' selected="selected"' if config.get('NMWP', 'priority') == '0' else ''}>Normal</option>
+					<option value="1"${' selected="selected"' if config.get('NMWP', 'priority') == '1' else ''}>High</option>
+					<option value="2"${' selected="selected"' if config.get('NMWP', 'priority') == '2' else ''}>Emergency</option>
+					</select>
+				</div>
+			</fieldset>
+            <fieldset class="inlineLabels" id="twitterFieldset">
+				<h3>Twitter</h3>
+				<div class="ctrlHolder checkbox">
+					<label>Enabled</label>
+					<input type="checkbox" name="Twitter.enabled" value="True" ${' checked="checked"' if config.get('Twitter', 'enabled') else ''} />
+					<p class="formHint">
+						Sends a notification on Twitter.
+					</p>
+				</div>
+				<div class="ctrlHolder checkbox">
+					<label>Also on snatched</label>
+					<input type="checkbox" name="Twitter.onSnatch" value="True" ${' checked="checked"' if config.get('Twitter', 'onSnatch') else ''} />
+					<p class="formHint">
+						Also send a notification when a movie is snatched.
+					</p>
+				</div>
+                % if not config.get('Twitter', 'isAuthenticated'):
+                <div class"ctrlHolder">
+                    <a href="${url(controller='config', action='twitterReqAuth')}" class="testNotification">Request Authorization</a>
+                </div>
+                % endif
+				<div class="ctrlHolder">
+					<a href="#twitterTest" id="twitterTest" class="testNotification">Send a notification on Twitter, see if it works.</a>
+				</div>
+			</fieldset>
+            <fieldset class="inlineLabels" id="synoIndexFieldset">
+				<h3>Synology Media Server</h3>
+				<div class="ctrlHolder checkbox">
+					<label>Enabled</label>
+					<input type="checkbox" name="Synoindex.enabled" value="True" ${' checked="checked"' if config.get('Synoindex', 'enabled') else ''} />
+					<p class="formHint">
+						Automaticly adds index to Synology Media Server.
+					</p>
+				</div>
+                <p class="ctrlHolder formHint">
+                    This only works if CP is running on a Synology NAS.
+				</p>
+			</fieldset>
+			<fieldset class="inlineLabels" id="traktNotificationFieldset">
+				<h3>Trakt</h3>
+				<div class="ctrlHolder checkbox">
+					<label>Update library</label>
+					<input type="checkbox" name="Trakt.notification_enabled" value="True" ${' checked="checked"' if config.get('Trakt', 'notification_enabled') else ''} />
+					<p class="formHint">
+						Sends a notification and updates your Trakt library. You must fill out the username and password in the extras tab for this to work.
+					</p>
+				</div>
+				<div class="ctrlHolder checkbox">
+					<label>Remove from watchlist</label>
+					<input type="checkbox" name="Trakt.watchlist_remove" value="True" ${' checked="checked"' if config.get('Trakt', 'watchlist_remove') else ''} />
+					<p class="formHint">
+						Removes the downloaded movie from your Trakt watchlist.
+					</p>
 				</div>
 			</fieldset>
 		</div>
@@ -962,7 +1270,7 @@
 	        }
 	    }
 		
-		Array.each(['renamingFieldset','torrentsFieldset','nzbsFieldset','nzbmatrixFieldset','nzbsorgFieldset','newznabFieldset','subtitleFieldset', 'xbmcFieldset', 'nmjFieldset', 'plexFieldset', 'prowlFieldset', 'growlFieldset', 'notifoFieldset', 'nmaFieldset'],function(item){
+		Array.each(['renamingFieldset','torrentsFieldset','nzbsFieldset','nzbmatrixFieldset','nzbsorgFieldset','newznabFieldset','subtitleFieldset', 'xbmcFieldset', 'nmjFieldset', 'plexFieldset', 'prowlFieldset', 'growlFieldset', 'notifoFieldset', 'boxcarFieldset', 'nmaFieldset', 'twitterFieldset', 'synoIndexFieldset', 'traktNotificationFieldset'],function(item){
 		    var fieldset = $(item)
 		    var checkbox = fieldset.getElement('[type=checkbox]')
 		    isEnabled(checkbox, fieldset)
@@ -977,6 +1285,8 @@
 			form.getElements('.sendTonzb').setStyle('display', 'none')
 	        if (sendToSelectnzb.get('value') == 'Sabnzbd') 
 	            form.getElement('.sabnzbd').setStyle('display', 'block')
+            else if (sendToSelectnzb.get('value') == 'Nzbget') 
+	            form.getElement('.nzbget').setStyle('display', 'block')
 	        else 
 	            form.getElement('.nzbblackhole').setStyle('display', 'block')
 	    }
@@ -1069,6 +1379,13 @@
 				'data': $('notifoFieldset')
 			}).send()
 		})
+		$('boxcarTest').addEvent('click', function(e){
+			(e).stop()
+			new Request({
+				'url': './testBoxcar/',
+				'data': $('boxcarFieldset')
+			}).send()
+		})
 		$('nmjTest').addEvent('click', function(e){
 			(e).stop()
 			new Request({
@@ -1098,6 +1415,28 @@
 			new Request({
 				'url': './testNMA/',
 				'data': $('nmaFieldset')
+			}).send()
+		})
+		$('nmwpTest').addEvent('click',function(e){
+			(e).stop()
+			new Request({
+				'url': './testNMWP/',
+				'data': $('nmwpFieldset')
+			}).send()
+		})
+        $('twitterTest').addEvent('click',function(e){
+			(e).stop()
+			new Request({
+				'url': './testTwitter/',
+				'data': $('twitterFieldset')
+			}).send()
+		})
+		
+		$('traktTest').addEvent('click', function(e){
+			(e).stop()
+			new Request({
+				'url': './testTrakt/',
+				'data': $('traktFieldset')
 			}).send()
 		})
 	});

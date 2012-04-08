@@ -7,6 +7,7 @@ from app.lib import plex
 from app.lib import prowl
 from app.lib import growl
 from app.lib import notifo
+from app.lib import boxcar
 from app.lib.cron.base import cronBase
 from app.lib.library import Library
 from app.lib.xbmc import XBMC
@@ -15,7 +16,11 @@ from app.lib.plex import PLEX
 from app.lib.prowl import PROWL
 from app.lib.growl import GROWL
 from app.lib.notifo import Notifo
+from app.lib.boxcar import Boxcar
 from app.lib.nma import NMA
+from app.lib.twitter import Twitter
+from app.lib.synoindex import Synoindex
+from app.lib.trakt import Trakt
 from xmg import xmg
 import cherrypy
 import os
@@ -23,7 +28,7 @@ import re
 import shutil
 import time
 import traceback
-
+import subprocess
 
 log = CPLog(__name__)
 
@@ -70,10 +75,8 @@ class RenamerCron(cronBase, Library):
             if destination == download or download in destination:
                 log.error("Download folder and movie destination shouldn't be the same. Change it in Settings >> Renaming.")
                 return True
-
             return False
         else:
-
             return True
 
     def doRename(self):
@@ -92,13 +95,12 @@ class RenamerCron(cronBase, Library):
 
         if allMovies:
             log.debug("Ready to rename some files.")
-
+        
         for movie in allMovies:
-
             if movie.get('match'):
                 log.debug('self.renameFiles(movie)')
                 finalDestination = self.renameFiles(movie)
-
+                
                 # Search for trailer & subtitles
                 log.debug('crons')
                 cherrypy.config['cron']['trailer'].forDirectory(finalDestination['directory'])
@@ -129,7 +131,8 @@ class RenamerCron(cronBase, Library):
                                                                posterFileNaming,
                                                                add_tags = {'orig_ext': posterOrigExt})
 
-                        x.write_nfo(nfo_location)
+                        urlOnly = self.config.get('Meta', 'urlOnly')
+                        x.write_nfo(nfo_location, url = True, xml = False)
 
                         x.write_fanart(fanart_filename,
                                        finalDestination['directory'],
@@ -145,7 +148,10 @@ class RenamerCron(cronBase, Library):
                     except Exception, e:
                         log.error('XMG TMDB API failure.  Please report to developers. API returned: %s' % e)
                         log.error(traceback.format_exc())
-
+                
+                # Run post-processing Scripts
+                self._run_extra_script(finalDestination)
+                
                 # Notify XBMC
                 log.debug('XBMC')
                 xbmc = XBMC()
@@ -176,11 +182,31 @@ class RenamerCron(cronBase, Library):
                 log.debug('Notifo')
                 notifo = Notifo()
                 notifo.notify('%s (%s)' % (movie['movie'].name, movie['movie'].year), "Downloaded:")
-                
+
+                # Notify Boxcar
+                log.debug('Boxcar')
+                boxcar = Boxcar()
+                boxcar.notify('%s (%s)' % (movie['movie'].name, movie['movie'].year), "Downloaded:")
+
                 #Notify NotifyMyAndroid
                 log.debug('NotifyMyAndroid')
                 nma = NMA()
                 nma.notify('Download Complete', 'Downloaded %s (%s)' % (movie['movie'].name, movie['movie'].year))
+
+                # Notify Twitter
+                log.debug('Twitter')
+                twitter = Twitter()
+                twitter.notify('Download Finished', 'Downloaded %s (%s)' % (movie['movie'].name, movie['movie'].year))
+
+                # Notify Synoindex
+                log.debug('Synoindex')
+                synoindex = Synoindex()
+                synoindex.addToLibrary(finalDestination['directory'])
+
+                # Notify Trakt
+                log.debug('Trakt')
+                trakt = Trakt()
+                trakt.notify(movie['movie'].name, movie['movie'].year, movie['movie'].imdb)
 
             else:
                 path = movie['path'].split(os.sep)
@@ -211,7 +237,7 @@ class RenamerCron(cronBase, Library):
                     for dir in os.path.split(root):
                         if dir in self.ignoreNames:
                             skip = True
-                            
+
                     # ignore if the current dir is the blackhole
                     if root in self.conf('download'):
                         skip = True
@@ -227,7 +253,7 @@ class RenamerCron(cronBase, Library):
                                 os.remove(fullFilePath)
                                 log.info('Removing file %s.' % fullFilePath)
                             except OSError:
-                                log.error('Couldn\'t remove file %s. To large.' % fullFilePath)
+                                log.error('Couldn\'t remove file %s. Too large.' % fullFilePath)
 
                     try:
                         os.rmdir(root)
@@ -285,7 +311,7 @@ class RenamerCron(cronBase, Library):
         replacements = {
              'cd': '',
              'cdNr': '',
-             'ext': '.mkv',
+             'ext': 'mkv',
              'namethe': namethe.strip(),
              'thename': moviename.strip(),
              'year': movie['info']['year'],
@@ -303,7 +329,6 @@ class RenamerCron(cronBase, Library):
 
         justAdded = []
         finalDestination = None
-        finalFilename = self.doReplace(fileNaming, replacements)
 
         #clean up post-processing script
         ppScriptName = movie['info'].get('ppScriptName')
@@ -319,6 +344,8 @@ class RenamerCron(cronBase, Library):
             else:
                 log.info("Don't know where the post processing script is located, not removing %s" % ppScriptName)
 
+        filenames = []
+
         for file in movie['files']:
             log.info('Trying to find a home for: %s' % latinToAscii(file['filename']))
 
@@ -332,6 +359,7 @@ class RenamerCron(cronBase, Library):
 
             folder = self.doReplace(folderNaming, replacements)
             filename = self.doReplace(fileNaming, replacements)
+            filenames.append(filename)
 
             old = os.path.join(movie['path'], file['filename'])
             dest = os.path.join(destination, folder, filename)
@@ -356,13 +384,15 @@ class RenamerCron(cronBase, Library):
                     break
                 justAdded.append(dest)
             else:
-                log.error('File %s already exists or not better.' % latinToAscii(filename))
-                path = file['path'].split(os.sep)
-                path.extend(['_EXISTS_' + path.pop()])
-                old = file['path']
-                dest = os.sep.join(path)
-                _move(old, dest)
-                # Break in any case, why did you do that Ruud?
+                try:
+                    log.error('File %s already exists or not better.' % latinToAscii(filename))
+                    path = movie['path'].split(os.sep)
+                    path.extend(['_EXISTS_' + path.pop()])
+                    old = movie['path']
+                    dest = os.sep.join(path)
+                    _move(old, dest)
+                except:
+                    log.error('Could not extend path name.')
                 break
 
             #get subtitle if any & move
@@ -411,7 +441,7 @@ class RenamerCron(cronBase, Library):
 
         return {
             'directory': finalDestination,
-            'filename': finalFilename
+            'filenames': filenames
         }
 
     def removeOld(self, path, dontDelete = [], newSize = 0):
@@ -436,8 +466,8 @@ class RenamerCron(cronBase, Library):
                     if ('*.' + ext in self.extensions['movie'] or '*.' + ext in self.extensions['subtitle']) and not '-trailer' in filename:
                         files.append(fullPath)
 
-        log.info('Quality Old: %d, New %d.' % (int(oldSize) / 1024 / 1024, int(newSize) / 1024 / 1024))
-        if oldSize < newSize:
+        log.info('Quality Old: %d, New %d.' % (long(oldSize) / 1024 / 1024, long(newSize) / 1024 / 1024))
+        if long(oldSize) < long(newSize):
             for file in files:
                 try:
                     os.remove(file)
@@ -470,6 +500,18 @@ class RenamerCron(cronBase, Library):
 
     def replaceDoubles(self, string):
         return string.replace('  ', ' ').replace(' .', '.')
+    
+    def _run_extra_script(self, finalDestination):
+        if (self.conf('script_enabled') and self.conf('file_path')):
+            for file in finalDestination['filenames']:
+                script_cmd = [os.path.abspath(self.conf('file_path'))] + [os.path.join(finalDestination['directory'], file)]
+                log.info('Executing command: ' + str(script_cmd))
+                try:
+                    p = subprocess.Popen(script_cmd, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                    out, err = p.communicate() #@UnusedVariable
+                    log.info(u"Script result: "+str(out))
+                except OSError, e:
+                    log.info(u"Unable to run extra_script: " + str(e.args[1]))
 
 def _move(old, dest, suppress = True):
     try:
