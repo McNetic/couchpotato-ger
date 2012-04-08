@@ -17,13 +17,28 @@ class newznab(nzbBase):
     detailUrl = 'details&id=%s'
     searchUrl = 'movie'
 
+# KLAUS: for kere.ws
     catIds = {
+	1020: ['dvdrip'],
+        1070: ['brrip'],
+        1030: ['dvdr'],
+        1010: ['cam', 'ts', 'tc', 'r5', 'scr'], 
+        1050: ['720p'],
+        1060: ['1080p']
+    }
+    catBackupId = 1010
+
+# Klaus: original
+    """
+    catIds = {
+	1020: ['dvdrip'],
         2000: ['brrip'],
         2010: ['dvdr'],
         2030: ['cam', 'ts', 'dvdrip', 'tc', 'r5', 'scr'],
         2040: ['720p', '1080p']
     }
     catBackupId = 2000
+    """
 
     timeBetween = 0 # Seconds
 
